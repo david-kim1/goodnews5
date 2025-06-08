@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>길음한의원 인지 건강 스크리닝</title>
+    <style>
+        /* 기본 스타일 */
+        body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f8f9fa; color: #333; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px; }
+        .section { margin-bottom: 35px; }
+        .section-title { font-size: 1.4em; font-weight: bold; color: #3498db; margin-bottom: 15px; }
+        .question { margin-bottom: 20px; }
+        .question p { font-size: 1.1em; margin: 0 0 10px 0; }
+        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        label .required { color: #e74c3c; font-weight: bold; margin-left: 4px; }
+        input[type="text"], input[type="date"], input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .radio-group label, .checkbox-group label { font-weight: normal; }
+        #bmi-result { font-weight: bold; color: #e74c3c; margin-left: 10px; }
+        .button-container { text-align: center; margin-top: 40px; }
+        button { background-color: #3498db; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 1.2em; cursor: pointer; }
+        #result-page { display: none; }
+        
+        /* 결과지 스타일 */
+        .result-header { text-align: center; margin-bottom: 30px; }
+        .result-header h1 { font-size: 2em; color: #3498db; border: none;}
+        .patient-info { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border: 1px solid #eee; padding: 15px; margin-bottom: 30px; border-radius: 5px; text-align: center; font-size: 1.1em; }
+        .result-box { padding: 25px; margin: 20px 0; border-radius: 8px; text-align: center; }
+        .result-box.level-1 { background-color: #e8f5e9; border: 2px solid #4caf50; }
+        .result-box.level-2 { background-color: #fffde7; border: 2px solid #ffc107; }
+        .result-box.level-3 { background-color: #ffebee; border: 2px solid #f44336; }
+        .result-box .result-title { font-size: 2.2em; font-weight: bold; margin: 0; }
+        .result-box .result-subtitle { font-size: 1.2em; margin: 5px 0 0 0;}
+        .result-section { margin-top: 30px; }
+        .result-section h3 { font-size: 1.3em; color: #3498db; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+        .result-section ul { list-style-type: '✓ '; padding-left: 20px;}
+        .result-section li { margin-bottom: 8px; }
+        .practitioner-comment { margin-top: 40px; padding: 15px; border: 1px dashed #ccc; border-radius: 5px; }
+        .practitioner-comment h3 { margin-top: 0;}
+
+        /* 인쇄 스타일 */
+        @media print {
+            body { background-color: white; padding: 0; }
+            #cognitive-form, .no-print { display: none !important; }
+            #result-page { display: block !important; box-shadow: none; border: none; padding: 0; margin: 0; }
+            .container { padding: 0; box-shadow: none; border-radius: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <form id="cognitive-form">
+            <h1>어르신 인지 건강 스크리닝</h1>
+            <div class="section">
+                <h2 class="section-title">1. 기본 정보</h2>
+                 <div class="input-group">
+                    <div>
+                        <label for="name">성함<span class="required">*</span></label>
+                        <input type="text" id="name" name="name">
+                    </div>
+                    <div>
+                        <label for="birthdate">생년월일<span class="required">*</span></label>
+                        <input type="date" id="birthdate" name="birthdate">
+                    </div>
+                </div>
+                <div class="input-group">
+                     <div>
+                        <label for="gender">성별<span class="required">*</span></label>
+                        <select id="gender" name="gender">
+                            <option value="">선택</option>
+                            <option value="male">남</option>
+                            <option value="female">여</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="today">검사 날짜</label>
+                        <input type="date" id="today" name="today">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                 <h2 class="section-title">2. 인지 기능 평가</h2>
+                 <div class="question"><p>1. 최근 기억력이 예전 같지 않다고 느끼십니까?<span class="required">*</span></p> <div class="radio-group"><label><input type="radio" name="q1" value="1">전혀</label> <label><input type="radio" name="q1" value="2">가끔</label> <label><input type="radio" name="q1" value="3">자주</label> <label><input type="radio" name="q1" value="4">항상</label></div></div>
+                 <div class="question"><p>2. 며칠 전 대화나 약속을 잊어버립니까?<span class="required">*</span></p> <div class="radio-group"><label><input type="radio" name="q2" value="1">전혀</label> <label><input type="radio" name="q2" value="2">가끔</label> <label><input type="radio" name="q2" value="3">자주</label> <label><input type="radio" name="q2" value="4">항상</label></div></div>
+                 <div class="question"><p>3. 물건 둔 곳을 몰라 한참 찾습니까?<span class="required">*</span></p> <div class="radio-group"><label><input type="radio" name="q3" value="1">거의</label> <label><input type="radio" name="q3" value="2">가끔</label> <label><input type="radio" name="q3" value="3">자주</label> <label><input type="radio" name="q3" value="4">매우 자주</label></div></div>
+                 <div class="question"><p>4. 대화 중 단어가 잘 안 떠오릅니까?<span class="required">*</span></p> <div class="radio-group"><label><input type="radio" name="q4" value="1">거의</label> <label><input type="radio" name="q4" value="2">가끔</label> <label><input type="radio" name="q4" value="3">자주</label> <label><input type="radio" name="q4" value="4">매우 자주</label></div></div>
+            </div>
+            
+            <div class="section"><h2 class="section-title">3. 수면 및 생활 습관</h2>
+                <div class="question"><p>5. 잠드는 데 보통 얼마나 걸리십니까?</p><div class="radio-group"><label><input type="radio" name="q5" value="1">15분 이내</label><label><input type="radio" name="q5" value="2">~30분</label><label><input type="radio" name="q5" value="3">~1시간</label><label><input type="radio" name="q5" value="4">1시간 이상</label></div></div>
+                <div class="question"><p>6. 밤에 주무시다 몇 번 깨십니까?</p><div class="radio-group"><label><input type="radio" name="q6" value="1">0~1번</label><label><input type="radio" name="q6" value="2">2~3번</label><label><input type="radio" name="q6" value="3">4~5번</label><label><input type="radio" name="q6" value="4">자주 깸</label></div></div>
+                <div class="question"><p>7. 아침에 개운하십니까?</p><div class="radio-group"><label><input type="radio" name="q7" value="1">항상</label><label><input type="radio" name="q7" value="2">대체로</label><label><input type="radio" name="q7" value="3">별로</label><label><input type="radio" name="q7" value="4">전혀</label></div></div>
+            </div>
+
+            <div class="section"><h2 class="section-title">4. 만성 질환 및 건강 상태</h2>
+                <div class="question"><p>8. 진단받은 질환 (모두 선택)</p><div class="checkbox-group"><label><input type="checkbox" name="q8" value="고혈압">고혈압</label><label><input type="checkbox" name="q8" value="당뇨병">당뇨병</label><label><input type="checkbox" name="q8" value="고지혈증">고지혈증</label><label><input type="checkbox" name="q8" value="심장질환">심장질환</label><label><input type="checkbox" name="q8" value="뇌졸중">뇌졸중</label></div></div>
+                <div class="question"><p>9. (당뇨병 시) 혈당 관리는 잘 됩니까?</p><div class="radio-group"><label><input type="radio" name="q9" value="1">잘됨</label><label><input type="radio" name="q9" value="2">보통</label><label><input type="radio" name="q9" value="3">안됨</label><label><input type="radio" name="q9" value="4">모름</label></div></div>
+                <div class="question"><p>10. 신체 계측</p><div class="input-group"><div><label for="height">키(cm)</label><input type="number" id="height" name="height"></div><div><label for="weight">몸무게(kg)</label><input type="number" id="weight" name="weight"></div></div><div><label>체질량지수(BMI):</label><span id="bmi-result">키와 몸무게를 입력하세요.</span></div></div>
+                <div class="question"><p>11. 청력 저하를 느끼십니까?</p><div class="radio-group"><label><input type="radio" name="q11" value="1">문제없음</label><label><input type="radio" name="q11" value="2">조금 불편</label><label><input type="radio" name="q11" value="3">대화 어려움</label><label><input type="radio" name="q11" value="4">보청기 사용</label><label><input type="radio" name="q11" value="5">매우 불편</label></div></div>
+            </div>
+
+            <div class="button-container">
+                <button type="button" id="submit-btn">결과 분석 및 결과지 생성</button>
+            </div>
+        </form>
+
+        <div id="result-page">
+            <div class="result-header">
+                <h1>길음한의원 인지 건강 스크리닝 결과지</h1>
+            </div>
+            <div class="patient-info">
+                <div><strong>환자성명:</strong> <span id="result-name"></span></div>
+                <div><strong>나이:</strong> 만 <span id="result-age"></span>세</div>
+                <div><strong>검사일:</strong> <span id="result-date"></span></div>
+            </div>
+            <div id="result-level-box"></div>
+            <div class="result-section">
+                <h3>주요 위험 요인 분석 (한의학적 관점)</h3>
+                <ul id="risk-factors-list"></ul>
+            </div>
+             <div class="practitioner-comment">
+                <h3>김덕호 원장님 종합 소견</h3>
+                <p>위 결과는 환자분의 주관적 응답을 바탕으로 한 선별 검사 결과이며 질병의 진단이 아닙니다. <br>인지 기능 저하 및 치매는 조기 발견과 예방적 관리가 매우 중요합니다. 본원에서는 환자분의 체질과 전반적인 건강 상태를 고려한 맞춤형 치료를 통해 뇌 건강을 증진시켜 드립니다.</p>
+                <textarea rows="4" style="width: 100%; padding: 10px; font-size: 1em;" placeholder="여기에 추가 소견을 입력하세요..."></textarea>
+            </div>
+            <div class="button-container no-print">
+                <button onclick="window.print()" style="margin-right: 15px; background-color: #27ae60;">🖨️ 결과지 인쇄하기</button>
+                <button onclick="location.reload()">↩️ 새 설문 작성하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 오늘 날짜 자동 설정
+        document.getElementById('today').valueAsDate = new Date();
+
+        // BMI 자동 계산
+        const heightInput = document.getElementById('height');
+        const weightInput = document.getElementById('weight');
+        const bmiResult = document.getElementById('bmi-result');
+        function calculateBmi() {
+            const height = parseFloat(heightInput.value);
+            const weight = parseFloat(weightInput.value);
+            if (height > 0 && weight > 0) {
+                const bmi = weight / ((height / 100) ** 2);
+                const bmiValue = bmi.toFixed(2);
+                let bmiCategory = bmi < 18.5 ? ' (저체중)' : bmi < 23 ? ' (정상)' : bmi < 25 ? ' (과체중)' : ' (비만)';
+                bmiResult.textContent = `${bmiValue} ${bmiCategory}`;
+                bmiResult.dataset.bmi = bmi;
+            } else {
+                bmiResult.textContent = '키와 몸무게를 입력하세요.';
+            }
+        }
+        heightInput.addEventListener('input', calculateBmi);
+        weightInput.addEventListener('input', calculateBmi);
+        
+        // ==================== [스크립트 핵심 수정] ====================
+        document.getElementById('submit-btn').addEventListener('click', function() {
+            const form = document.getElementById('cognitive-form');
+            const errors = [];
+
+            // --- 1. 전체 필수 항목 검사 ---
+            if (!form.elements['name'].value) {
+                errors.push('1부: 환자 성명을 입력해주세요.');
+            }
+            if (!form.elements['birthdate'].value) {
+                errors.push('1부: 생년월일을 입력해주세요.');
+            }
+            if (!form.elements['gender'].value) {
+                errors.push('1부: 성별을 선택해주세요.');
+            }
+            for (let i = 1; i <= 4; i++) {
+                if (!form.querySelector(`input[name="q${i}"]:checked`)) {
+                    errors.push(`2부: ${i}번 인지 기능 평가 문항에 답변해주세요.`);
+                }
+            }
+
+            // --- 2. 오류가 있으면 한번에 모두 알려주고 중단 ---
+            if (errors.length > 0) {
+                alert('다음 항목을 확인해주세요:\n\n- ' + errors.join('\n- '));
+                return;
+            }
+
+            // --- 3. 모든 검사를 통과한 경우에만 결과 분석 실행 ---
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.q8 = formData.getAll('q8');
+
+            let cognitiveScore = 0;
+            for (let i = 1; i <= 4; i++) {
+                cognitiveScore += parseInt(data[`q${i}`], 10);
+            }
+
+            const riskFactors = [];
+            if ((data.q5 && parseInt(data.q5) >= 3) || (data.q6 && parseInt(data.q6) >= 2) || (data.q7 && parseInt(data.q7) >= 3)) {
+                riskFactors.push("수면의 질 저하 (心脾勞損, 陰虛火旺): 뇌가 충분히 쉬지 못하여 노폐물(濕痰)이 쌓일 수 있습니다.");
+            }
+            if (data.q8.length > 0) {
+                riskFactors.push(`만성 질환 (${data.q8.join(', ')}): 혈액순환을 저해하여 뇌에 충분한 영양 공급을 방해하는 어혈(瘀血)의 원인이 됩니다.`);
+            }
+            if (data.q8.includes('당뇨병') && data.q9 && parseInt(data.q9) >= 3) {
+                riskFactors.push("조절되지 않는 혈당: 혈관 손상을 유발하고 인지 기능 저하를 가속화할 수 있습니다.");
+            }
+            const bmi = parseFloat(bmiResult.dataset.bmi);
+            if (bmi >= 23) {
+                 riskFactors.push(`과체중/비만 (BMI: ${bmi.toFixed(2)}): 체내 습담(濕痰)을 조장하여 기혈 순환을 방해하고 뇌기능에 영향을 줍니다.`);
+            }
+            if (data.q11 && parseInt(data.q11) >= 3) {
+                riskFactors.push("청력 저하 (腎虛): 외부 자극 감소는 인지 활동 저하로 이어질 수 있습니다.");
+            }
+
+            let finalLevel = 1;
+            if (cognitiveScore >= 10 || (cognitiveScore >= 8 && riskFactors.length >= 2)) {
+                finalLevel = 3;
+            } else if (cognitiveScore >= 6 || riskFactors.length >= 1) {
+                finalLevel = 2;
+            }
+            
+            const birthDate = new Date(data.birthdate);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            document.getElementById('result-name').textContent = data.name;
+            document.getElementById('result-age').textContent = age;
+            document.getElementById('result-date').textContent = new Date(data.today).toLocaleDateString('ko-KR');
+
+            const levelBox = document.getElementById('result-level-box');
+            if(finalLevel === 1) {
+                levelBox.className = 'result-box level-1';
+                levelBox.innerHTML = '<div class="result-title">🟢 양호 (초록불)</div><div class="result-subtitle">현재 인지 기능 및 생활 습관이 건강하게 유지되고 있습니다.</div>';
+            } else if (finalLevel === 2) {
+                levelBox.className = 'result-box level-2';
+                levelBox.innerHTML = '<div class="result-title">🟡 주의 (노란불)</div><div class="result-subtitle">경미한 인지 저하 또는 위험요인이 발견되었습니다. 예방적 관리가 필요합니다.</div>';
+            } else {
+                levelBox.className = 'result-box level-3';
+                levelBox.innerHTML = '<div class="result-title">🔴 경고 (빨간불)</div><div class="result-subtitle">인지 기능 저하가 의심됩니다. 적극적인 검사와 한의학적 치료를 권장합니다.</div>';
+            }
+
+            const riskList = document.getElementById('risk-factors-list');
+            riskList.innerHTML = '';
+            if (riskFactors.length > 0) {
+                riskFactors.forEach(factor => {
+                    const li = document.createElement('li');
+                    li.textContent = factor;
+                    riskList.appendChild(li);
+                });
+            } else {
+                riskList.innerHTML = '<li>특별히 발견된 위험 요인이 없습니다. 좋은 습관을 유지해주세요.</li>';
+            }
+
+            document.getElementById('cognitive-form').style.display = 'none';
+            document.getElementById('result-page').style.display = 'block';
+        });
+        // =============================================================
+    </script>
+</body>
+</html>
