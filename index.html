@@ -38,6 +38,16 @@
         .result-section li { margin-bottom: 8px; }
         .practitioner-comment { margin-top: 40px; padding: 15px; border: 1px dashed #ccc; border-radius: 5px; }
         .practitioner-comment h3 { margin-top: 0;}
+        /* === 상세 평가 테이블 스타일 === */
+        #detailed-results-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        #detailed-results-table th, #detailed-results-table td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        #detailed-results-table th { background-color: #f2f2f2; }
+        #detailed-results-table td:first-child { text-align: left; font-weight: bold; }
+        .grade-0 { color: #4caf50; font-weight: bold; }
+        .grade-1 { color: #f59e0b; font-weight: bold; }
+        .grade-2 { color: #ef4444; font-weight: bold; }
+        .grade-3 { color: #b91c1c; font-weight: bold; background-color: #fee2e2; }
+        
         @media print { body { background-color: white; padding: 0; } #cognitive-form, .no-print { display: none !important; } #result-page { display: block !important; box-shadow: none; border: none; padding: 0; margin: 0; } .container { padding: 0; box-shadow: none; border-radius: 0; } }
     </style>
 </head>
@@ -45,7 +55,6 @@
     <div class="container">
         <form id="cognitive-form">
             <h1>인지 건강 종합 검사지</h1>
-
             <div class="section">
                 <h2 class="section-title">1. 기본 정보</h2>
                 <div class="input-group">
@@ -108,6 +117,22 @@
                 <div><strong>검사일:</strong> <span id="result-date"></span></div>
             </div>
             <div id="result-level-box"></div>
+
+            <div class="result-section">
+                <h3>주요 항목별 상세 평가</h3>
+                <table id="detailed-results-table">
+                    <thead>
+                        <tr>
+                            <th>평가 항목</th>
+                            <th>상태</th>
+                            <th>등급 (0=정상)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailed-results-tbody">
+                        </tbody>
+                </table>
+            </div>
+
             <div class="result-section"><h3>한의학적 위험 요인 및 변증 분석</h3><ul id="risk-factors-list"></ul></div>
             <div class="practitioner-comment"><h3>김덕호 원장님 종합 소견</h3><p>위 결과는 환자분의 주관적 응답을 바탕으로 한 선별 검사 결과이며 질병의 진단이 아닙니다. <br>인지 기능 저하 및 치매는 조기 발견과 예방적 관리가 매우 중요합니다. 본원에서는 환자분의 체질과 전반적인 건강 상태를 고려한 맞춤형 치료를 통해 뇌 건강을 증진시켜 드립니다.</p><textarea rows="4" style="width: 100%; padding: 10px; font-size: 1em;" placeholder="여기에 추가 소견을 입력하세요..."></textarea></div>
             <div class="button-container no-print"><button onclick="window.print()" style="margin-right: 15px; background-color: #27ae60;">🖨️ 결과지 인쇄하기</button><button onclick="location.reload()">↩️ 새 설문 작성하기</button></div>
@@ -154,30 +179,72 @@
             const data = Object.fromEntries(formData.entries());
             data.q14 = formData.getAll('q14');
 
+            // === 1. 항목별 점수 및 등급 계산 ===
+            let grades = {};
+
+            // 1-1. 인지 기능 (6문항, 6~24점)
             let cognitiveScore = 0;
             for (let i = 1; i <= 6; i++) cognitiveScore += parseInt(data[`q${i}`], 10);
-            
-            let iadlScore = parseInt(data.q9_1) + parseInt(data.q9_2) + parseInt(data.q9_3);
+            if (cognitiveScore <= 8) grades.cognitive = { grade: 0, text: '양호' };
+            else if (cognitiveScore <= 12) grades.cognitive = { grade: 1, text: '경미한 저하 의심' };
+            else if (cognitiveScore <= 17) grades.cognitive = { grade: 2, text: '중등도 저하 의심' };
+            else grades.cognitive = { grade: 3, text: '심각한 저하 의심' };
 
-            const riskFactors = [];
-            if (data.q7 && parseInt(data.q7) >= 3) riskFactors.push("정서 문제 (간기울결/기허): 의욕 저하 및 무감동은 인지 기능 저하와 밀접한 관련이 있습니다.");
-            if (data.q8 && parseInt(data.q8) >= 3) riskFactors.push("성격 변화 (음허화동/간양상항): 쉽게 화를 내는 것은 뇌 혈관 건강에 악영향을 줄 수 있습니다.");
-            if (data.q10 && parseInt(data.q10) >= 3) riskFactors.push("소화기 문제 (비허습담): 소화 기능 저하는 뇌를 탁하게 하는 습담(濕痰)을 유발할 수 있습니다.");
-            if (data.q11 && parseInt(data.q11) >= 3) riskFactors.push("어지럼증 (담탁/혈허): 뇌 혈액순환 저하의 신호일 수 있습니다.");
-            if (data.q12 && parseInt(data.q12) >= 3) riskFactors.push("비뇨기 문제 (신허): 신(腎) 기능의 저하는 뇌수(腦髓) 부족과 직결됩니다.");
-            if (data.q13 && parseInt(data.q13) >= 3) riskFactors.push("수면의 질 저하: 뇌가 회복하고 노폐물을 청소할 시간을 충분히 갖지 못하고 있습니다.");
-            if (data.q14.length > 0) riskFactors.push(`만성 질환 (${data.q14.join(', ')}): 혈액을 탁하게 하는 어혈(瘀血)의 원인이 됩니다.`);
-            const bmi = parseFloat(bmiResult.dataset.bmi);
-            if (bmi >= 23) riskFactors.push(`과체중/비만 (BMI: ${bmi.toFixed(2)}): 체내 습담을 조장하여 기혈 순환을 방해합니다.`);
-            if (data.q15_hearing && parseInt(data.q15_hearing) >= 3) riskFactors.push("청력 저하: 외부 자극 감소는 인지 활동 저하로 이어집니다.");
+            // 1-2. 정서 상태 (2문항, 2~8점)
+            let moodScore = (parseInt(data.q7) || 1) + (parseInt(data.q8) || 1);
+            if (moodScore <= 3) grades.mood = { grade: 0, text: '대체로 양호' };
+            else if (moodScore <= 5) grades.mood = { grade: 1, text: '경미한 우울/불안' };
+            else if (moodScore <= 7) grades.mood = { grade: 2, text: '상당한 정서 문제' };
+            else grades.mood = { grade: 3, text: '심각한 정서 문제' };
+
+            // 1-3. 일상생활 수행능력 (3문항, 3~9점)
+            let iadlScore = parseInt(data.q9_1) + parseInt(data.q9_2) + parseInt(data.q9_3);
+            if (iadlScore <= 3) grades.iadl = { grade: 0, text: '독립적 수행 가능' };
+            else if (iadlScore <= 5) grades.iadl = { grade: 1, text: '경미한 어려움' };
+            else if (iadlScore <= 7) grades.iadl = { grade: 2, text: '상당한 도움 필요' };
+            else grades.iadl = { grade: 3, text: '독립 수행 불가능' };
             
+            // 1-4. 수면의 질 (1문항, 1~4점)
+            let sleepScore = parseInt(data.q13) || 1;
+            if (sleepScore <= 1) grades.sleep = { grade: 0, text: '매우 좋음' };
+            else if (sleepScore <= 2) grades.sleep = { grade: 1, text: '다소 불량' };
+            else if (sleepScore <= 3) grades.sleep = { grade: 2, text: '상당히 불량' };
+            else grades.sleep = { grade: 3, text: '매우 불량' };
+
+            // 1-5. 전신 건강 위험도 (위험요인 개수)
+            let systemicRiskCount = 0;
+            if (parseInt(data.q10) >= 3) systemicRiskCount++;
+            if (parseInt(data.q11) >= 3) systemicRiskCount++;
+            if (parseInt(data.q12) >= 3) systemicRiskCount++;
+            if (data.q14.length > 0) systemicRiskCount++;
+            const bmi = parseFloat(bmiResult.dataset.bmi);
+            if (bmi >= 23) systemicRiskCount++;
+            if (parseInt(data.q15_hearing) >= 3) systemicRiskCount++;
+
+            if (systemicRiskCount <= 1) grades.systemic = { grade: 0, text: '대체로 양호' };
+            else if (systemicRiskCount <= 2) grades.systemic = { grade: 1, text: '주의 필요' };
+            else if (systemicRiskCount <= 4) grades.systemic = { grade: 2, text: '관리 시급' };
+            else grades.systemic = { grade: 3, text: '복합적 위험' };
+            
+            // === 2. 최종 레벨 및 변증 분석 ===
+            const riskFactors = [];
+            if (grades.mood.grade >= 1) riskFactors.push("정서 문제 (간기울결/기허): 의욕 저하 및 무감동은 인지 기능 저하와 밀접한 관련이 있습니다.");
+            if (grades.sleep.grade >= 1) riskFactors.push("수면의 질 저하: 뇌가 회복하고 노폐물을 청소할 시간을 충분히 갖지 못하고 있습니다.");
+            if (parseInt(data.q10) >= 3) riskFactors.push("소화기 문제 (비허습담): 소화 기능 저하는 뇌를 탁하게 하는 습담(濕痰)을 유발할 수 있습니다.");
+            if (parseInt(data.q11) >= 3) riskFactors.push("어지럼증 (담탁/혈허): 뇌 혈액순환 저하의 신호일 수 있습니다.");
+            if (parseInt(data.q12) >= 3) riskFactors.push("비뇨기 문제 (신허): 신(腎) 기능의 저하는 뇌수(腦髓) 부족과 직결됩니다.");
+            if (data.q14.length > 0) riskFactors.push(`만성 질환 (${data.q14.join(', ')}): 혈액을 탁하게 하는 어혈(瘀血)의 원인이 됩니다.`);
+            if (bmi >= 23) riskFactors.push(`과체중/비만 (BMI: ${bmi.toFixed(2)}): 체내 습담을 조장하여 기혈 순환을 방해합니다.`);
+            if (parseInt(data.q15_hearing) >= 3) riskFactors.push("청력 저하: 외부 자극 감소는 인지 활동 저하로 이어집니다.");
+
             let finalLevel = 1;
-            if (iadlScore >= 5 || cognitiveScore >= 16 || (cognitiveScore >= 13 && riskFactors.length >= 3)) {
+            if (grades.iadl.grade >= 2 || grades.cognitive.grade >= 3 || (grades.cognitive.grade >= 2 && systemicRiskCount >= 3)) {
                 finalLevel = 3;
-            } else if (cognitiveScore >= 9 || riskFactors.length >= 2) {
+            } else if (grades.cognitive.grade >= 1 || systemicRiskCount >= 2) {
                 finalLevel = 2;
             }
-
+            
+            // === 3. 결과 페이지 생성 ===
             const birthDate = new Date(data.birthdate);
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
@@ -189,27 +256,37 @@
 
             const levelBox = document.getElementById('result-level-box');
             if(finalLevel === 1) {
-                levelBox.className = 'result-box level-1';
-                levelBox.innerHTML = '<div class="result-title">🟢 양호 (초록불)</div><div class="result-subtitle">인지 기능 및 생활 습관이 비교적 건강하게 유지되고 있습니다.</div>';
+                levelBox.className = 'result-box level-1'; levelBox.innerHTML = '<div class="result-title">🟢 양호 (초록불)</div><div class="result-subtitle">인지 기능 및 생활 습관이 비교적 건강하게 유지되고 있습니다.</div>';
             } else if (finalLevel === 2) {
-                levelBox.className = 'result-box level-2';
-                levelBox.innerHTML = '<div class="result-title">🟡 주의 (노란불)</div><div class="result-subtitle">경미한 인지 저하 또는 관련 위험요인이 발견되었습니다. 예방적 관리가 필요합니다.</div>';
+                levelBox.className = 'result-box level-2'; levelBox.innerHTML = '<div class="result-title">🟡 주의 (노란불)</div><div class="result-subtitle">경미한 인지 저하 또는 관련 위험요인이 발견되었습니다. 예방적 관리가 필요합니다.</div>';
             } else {
-                levelBox.className = 'result-box level-3';
-                levelBox.innerHTML = '<div class="result-title">🔴 경고 (빨간불)</div><div class="result-subtitle">인지 기능 저하 및 일상생활의 어려움이 의심됩니다. 적극적인 검사와 치료를 권장합니다.</div>';
+                levelBox.className = 'result-box level-3'; levelBox.innerHTML = '<div class="result-title">🔴 경고 (빨간불)</div><div class="result-subtitle">인지 기능 저하 및 일상생활의 어려움이 의심됩니다. 적극적인 검사와 치료를 권장합니다.</div>';
+            }
+
+            // 상세 평가 테이블 채우기
+            const tbody = document.getElementById('detailed-results-tbody');
+            tbody.innerHTML = '';
+            const gradeMapping = {
+                '인지 기능': grades.cognitive,
+                '정서 상태': grades.mood,
+                '일상생활 수행능력': grades.iadl,
+                '수면의 질': grades.sleep,
+                '전신 건강 위험도': grades.systemic
+            };
+            for (const key in gradeMapping) {
+                const item = gradeMapping[key];
+                const row = `<tr>
+                                <td>${key}</td>
+                                <td>${item.text}</td>
+                                <td class="grade-${item.grade}">${item.grade}</td>
+                             </tr>`;
+                tbody.innerHTML += row;
             }
 
             const riskList = document.getElementById('risk-factors-list');
             riskList.innerHTML = '';
-            if (riskFactors.length > 0) {
-                riskFactors.forEach(factor => {
-                    const li = document.createElement('li');
-                    li.textContent = factor;
-                    riskList.appendChild(li);
-                });
-            } else {
-                riskList.innerHTML = '<li>특별히 발견된 위험 요인이 없습니다. 좋은 습관을 유지해주세요.</li>';
-            }
+            if (riskFactors.length > 0) { riskFactors.forEach(factor => { const li = document.createElement('li'); li.textContent = factor; riskList.appendChild(li); });
+            } else { riskList.innerHTML = '<li>특별히 발견된 위험 요인이 없습니다. 좋은 습관을 유지해주세요.</li>'; }
 
             document.getElementById('cognitive-form').style.display = 'none';
             document.getElementById('result-page').style.display = 'block';
